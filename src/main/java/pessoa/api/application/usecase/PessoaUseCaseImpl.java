@@ -1,7 +1,6 @@
 package pessoa.api.application.usecase;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import pessoa.api.core.domain.entities.Pessoa;
 import pessoa.api.core.domain.exceptions.BusinessException;
 import pessoa.api.core.domain.gateways.PessoaGateway;
@@ -18,13 +17,11 @@ public class PessoaUseCaseImpl implements PessoaUseCase {
 
     @Override
     public Pessoa execute(Pessoa pessoa) {
-        Pessoa pessoa1 = pessoaGateway.findByCpf(pessoa.getCpf());
-        var status = HttpStatus.OK;
-        if (pessoa1 != null) {
-            status = HttpStatus.NOT_FOUND;
-            throw new BusinessException("Ja existe uma pessoa com esse CPF" +  pessoa.getCpf() + " cadastrado!" + " Status: " + status);
+        Pessoa pessoaExistente = pessoaGateway.findByCpf(pessoa.getCpf());
+        if (pessoaExistente != null) {
+            throw new BusinessException("Ja existe uma pessoa com esse CPF: " + pessoa.getCpf());
         }
-        log.info("Status: {}", status.value());
+        log.info("Criando nova pessoa com CPF: {}", pessoa.getCpf());
         return pessoaGateway.createPessoa(pessoa);
     }
 
