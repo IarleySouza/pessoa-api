@@ -1,0 +1,117 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ dev, hom, main ]
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build with Maven
+        run: mvn compile -q
+
+      - name: Run tests
+        run: mvn test
+
+      - name: Package application
+        run: mvn package -DskipTests -q
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: target/*.jar
+
+  deploy-dev:
+    name: Deploy to Dev
+    needs: build
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+
+      - name: Deploy to Dev
+        run: |
+          echo "=========================================="
+          echo "  Deploying to DEV environment"
+          echo "  Branch: ${{ github.ref_name }}"
+          echo "  Commit: ${{ github.sha }}"
+          echo "  Spring Profile: dev"
+          echo "=========================================="
+          echo "Artifact:"
+          ls -lh *.jar
+          # Add your deployment commands here, e.g.:
+          # scp *.jar user@dev-server:/app/
+          # ssh user@dev-server 'systemctl restart pessoa-api'
+
+  deploy-hom:
+    name: Deploy to Homologation
+    needs: build
+    if: github.ref == 'refs/heads/hom'
+    runs-on: ubuntu-latest
+    environment: hom
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+
+      - name: Deploy to Homologation
+        run: |
+          echo "=========================================="
+          echo "  Deploying to HOM environment"
+          echo "  Branch: ${{ github.ref_name }}"
+          echo "  Commit: ${{ github.sha }}"
+          echo "  Spring Profile: hom"
+          echo "=========================================="
+          echo "Artifact:"
+          ls -lh *.jar
+          # Add your deployment commands here, e.g.:
+          # scp *.jar user@hom-server:/app/
+          # ssh user@hom-server 'systemctl restart pessoa-api'
+
+  deploy-prod:
+    name: Deploy to Production
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+
+      - name: Deploy to Production
+        run: |
+          echo "=========================================="
+          echo "  Deploying to PRODUCTION environment"
+          echo "  Branch: ${{ github.ref_name }}"
+          echo "  Commit: ${{ github.sha }}"
+          echo "  Spring Profile: prod"
+          echo "=========================================="
+          echo "Artifact:"
+          ls -lh *.jar
+          # Add your deployment commands here, e.g.:
+          # scp *.jar user@prod-server:/app/
+          # ssh user@prod-server 'systemctl restart pessoa-api'
